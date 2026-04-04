@@ -33,6 +33,13 @@
         </include>
     </source>
 
+    <coverage>
+        <report>
+            <clover outputFile=".cache/phpunit/clover.xml"/>
+            <html outputDirectory=".build/reports/phpunit-html" lowUpperBound="50" highLowerBound="90"/>
+        </report>
+    </coverage>
+
     <logging>
         <junit outputFile=".cache/phpunit/junit.xml"/>
     </logging>
