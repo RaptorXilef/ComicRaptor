@@ -214,3 +214,4 @@ ToDo*.md
 # AUSNAHMEN (Diese Dateien MÜSSEN im Repo bleiben)
 !composer.lock
 !package-lock.json
+!cspell-words.txt
