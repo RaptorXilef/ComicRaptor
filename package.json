@@ -17,7 +17,7 @@
     "chk": "npm-run-all2 chk:*",
     "chk:sec": "npm audit",
     "chk:sp": "cspell lint \"**/*.{js,scss,php,md}\" --no-progress",
-    "chk:md": "markdownlint \"**/*.md\" --ignore node_modules",
+    "chk:md": "markdownlint \"**/*.md\" --ignore node_modules --ignore-path .markdownlintignore",
     "chk:size": "source-map-explorer public/assets/css/main.min.css public/assets/js/main.min.js",
     "test": "vitest run --passWithNoTests",
     "test:ui": "vitest --ui --passWithNoTests",
