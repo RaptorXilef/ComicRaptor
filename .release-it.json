@@ -1,0 +1,23 @@
+{
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "infile": "CHANGELOG.md",
+      "ignoreRecommendedBump": true,
+      "strict": true,
+      "config": "changelog-config.cjs"
+    }
+  },
+  "git": {
+    "commitMessage": "chore(release): v${version}",
+    "tagName": "v${version}",
+    "requireCleanWorkingDir": true,
+    "commit": true,
+    "tag": true,
+    "push": true
+  },
+  "github": { "release": false },
+  "npm": { "publish": false },
+  "hooks": {
+    "after:bump": "npm run build:css && npm run build:js"
+  }
+}

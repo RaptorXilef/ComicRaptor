@@ -1,0 +1,113 @@
+{
+  "name": "raptorxilef/comic-raptor-engine",
+  "description": "Professional Multi-Tenancy Comic Publishing Engine",
+  "type": "project",
+  "license": "CC-BY-NC-SA-4.0",
+  "authors": [
+    {
+      "name": "Felix Maywald",
+      "email": "31962607+RaptorXilef@users.noreply.github.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "php": ">=8.3",
+    "ezyang/htmlpurifier": "^4.19",
+    "ext-zip": "*",
+    "ext-mbstring": "*"
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^2.1",
+    "phpstan/extension-installer": "^1.4",
+    "phpstan/phpstan-strict-rules": "^2.0",
+    "phpstan/phpstan-phpunit": "^2.0",
+    "phpunit/phpunit": "^11.0",
+    "pestphp/pest": "^3.8",
+    "friendsofphp/php-cs-fixer": "^3.92",
+    "rector/rector": "^2.2",
+    "squizlabs/php_codesniffer": "^3.13",
+    "phpcsstandards/phpcsutils": "^1.2",
+    "slevomat/coding-standard": "^8.22",
+    "phpmd/phpmd": "^2.15"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "phpstan/extension-installer": true,
+      "pestphp/pest-plugin": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "scripts": {
+    "// --- PHASE 0: SETUP & LIFECYCLE ---": "",
+    "setup": "@php scripts/Setup.php init",
+    "post-install-cmd": "@setup",
+    "post-update-cmd": "@setup",
+    "post-autoload-dump": "@setup",
+    "// --- MASTER COMMANDS (QUICK ACCESS) ---": "",
+    "chk": [
+      "@qa"
+    ],
+    "fix": [
+      "@fmt"
+    ],
+    "fmt": [
+      "@fix:modern",
+      "@fix:style"
+    ],
+    "qa": [
+      "@chk:test",
+      "@chk:modern",
+      "@chk:style",
+      "@chk:analyze"
+    ],
+    "// --- PHASE 1: TESTS & MUTATION ---": "",
+    "chk:test": "pest --parallel",
+    "chk:test-full": "pest --parallel --display-deprecations",
+    "chk:test-coverage": "pest --coverage",
+    "chk:test-mut": "php -d xdebug.mode=coverage tools/infection.phar --threads=4 --min-msi=30",
+    "// --- PHASE 2: MODERNIZATION (RECTOR) ---": "",
+    "chk:modern": "rector process --dry-run",
+    "fix:modern": "rector process",
+    "// --- PHASE 3: STYLE (PHP-CS-FIXER) ---": "",
+    "chk:style": "php-cs-fixer fix --dry-run --diff --no-interaction",
+    "fix:style": "php-cs-fixer fix --allow-risky=yes",
+    "// --- PHASE 4: ANALYZE (STATIC) ---": "",
+    "chk:analyze": [
+      "@chk:stan",
+      "@chk:cs",
+      "@chk:md",
+      "@chk:cpd"
+    ],
+    "chk:stan": "phpstan analyse src/ public/",
+    "chk:cs": "phpcs src/",
+    "chk:md": "phpmd src/ text phpmd.xml",
+    "chk:cpd": "php tools/phpcpd.phar src/ --min-lines=5 --min-tokens=70",
+    "// --- PHASE 5: MAINTENANCE & UTILS ---": "",
+    "util:up": "@php scripts/Setup.php up",
+    "util:dump": "composer dump-autoload -o",
+    "util:pkg-up": [
+      "npm audit fix",
+      "composer update",
+      "@util:up"
+    ],
+    "// --- PHASE 6: BUILD & CLEANUP ---": "",
+    "build:clear": "@php scripts/Setup.php clear",
+    "// --- PHASE 7: CI/CD (CONTINUOUS INTEGRATION) ---": "",
+    "ci:qa": [
+      "phpstan analyse src/ public/ --error-format=checkstyle > .build/reports/phpstan.xml || true",
+      "phpcs --report=checkstyle --report-file=.build/reports/phpcs.xml src/ || true",
+      "pest --ci --log-junit .build/reports/junit.xml"
+    ]
+  }
+}
