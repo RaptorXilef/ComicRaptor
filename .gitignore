@@ -181,26 +181,36 @@ logs/
 # ==============================================================================
 # PROJEKT SPEZIFISCH (ComicRaptor)
 # ==============================================================================
-# Temporäre Zip-Archive
-*.zip
+# Infrastruktur & Tools (werden via scripts/Setup.php verwaltet)
+/tools/*.phar
+/.build/
 
-# Spezifische Dateitypen
+# Generierte Frontend-Assets (Build-Artefakte)
+# Wir vertrauen unserem Build-Prozess (npm run make)
+/public/assets/css/*
+/public/assets/js/*
+!/public/assets/css/.gitkeep
+!/public/assets/js/.gitkeep
+
+# Temporäre Zip-Archive & OS-Reste
+*.zip
 *.ink
 *.url
 
-# Private Scripte & Notizen
+# Private Scripte & Notizen (Sicherheit geht vor)
 Combine-*.ps1
 Mein*Code*.*
 Refactored_PHP_Code_Part*
-
-
-# Notizen und Erinnerungen
 *Notizen*
 .*todo*
 ToDo*.md
 *Commites*
-
 *.docx
 *.txt
+*.psd
 
 .npmrc
+
+# AUSNAHMEN (Diese Dateien MÜSSEN im Repo bleiben)
+!composer.lock
+!package-lock.json
