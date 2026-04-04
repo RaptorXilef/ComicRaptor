@@ -1,0 +1,7 @@
+# Beschreibung: Liste von Commits, die von git blame ignoriert werden sollen (z.B. Massen-Formatierungen)
+# @file: .git-blame-ignore-revs
+#
+# @since: 0.1.0 Initiale Erstellung
+
+# Beschreibung/Commit-Name
+# Commit-ID
