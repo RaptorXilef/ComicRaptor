@@ -1,0 +1,4 @@
+# phpstan-baseline.neon
+# generrieren mit "vendor/bin/phpstan analyse --generate-baseline"
+parameters:
+    ignoreErrors: []
