@@ -1,0 +1,175 @@
+name: ComicRaptor CI
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  # =============================================================================
+  # SETUP: ABHÄNGIGKEITEN & CACHE
+  # =============================================================================
+  setup:
+    name: 📦 Setup & Cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP Setup
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer
+          coverage: none
+
+      - name: Validate Composer
+        run: composer validate --strict
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            vendor
+            node_modules
+            .cache
+          key: ${{ runner.os }}-conf-${{ hashFiles('**/composer.lock', '**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-conf-
+
+      - name: Install Dependencies
+        run: |
+          composer install --no-progress --prefer-dist
+          npm ci
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-dependencies
+          path: |
+            vendor/
+            node_modules/
+            .cache/
+          retention-days: 1
+
+  # =============================================================================
+  # PHP QUALITY & ANALYSIS
+  # =============================================================================
+  php-quality:
+    name: ${{ matrix.icon }} PHP ${{ matrix.name }}
+    needs: setup
+    runs-on: ubuntu-latest
+    permissions: { pull-requests: write, contents: read }
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: "Coding Standard", check: "analyze:cs", icon: "📐" }
+          - { name: "Static Analysis", check: "analyze:phpstan", icon: "🔍" }
+          - { name: "Architecture", check: "analyze:deptrac", icon: "🏗️" }
+          - { name: "Mess Detector", check: "analyze:phpmd", icon: "🧹" }
+          - { name: "Security Audit", check: "chk:sec", icon: "🛡️" }
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: cs2pr # WICHTIG für Annotations
+      - uses: actions/download-artifact@v4
+        with: { name: all-dependencies }
+      - name: Run Check
+        run: |
+          chmod -R +x vendor/bin
+          # Hier nutzen wir cs2pr, um Fehler direkt in den PR zu schreiben!
+          composer ${{ matrix.check }} -- --report=checkstyle | cs2pr || (exit ${PIPESTATUS[0]})
+
+  # =============================================================================
+  # PHP & JS TESTING (Parallel)
+  # =============================================================================
+  testing:
+    name: 🧪 ${{ matrix.name }}
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { name: "PHP Unit & Infection", type: "php" }
+          - { name: "JS Vitest", type: "js" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: xdebug
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/download-artifact@v4
+        with: { name: all-dependencies }
+
+      - name: Run PHP Tests
+        if: matrix.type == 'php'
+        run: |
+          mkdir -p .cache/phpunit
+          vendor/bin/phpunit --coverage-clover .cache/phpunit/clover.xml
+          vendor/bin/infection --threads=4 --logger-github --min-msi=30
+
+      - name: Run JS Tests
+        if: matrix.type == 'js'
+        run: npx vitest run
+
+  # =============================================================================
+  # FRONTEND QUALITY
+  # =============================================================================
+  frontend-qa:
+    name: ${{ matrix.icon }} JS/CSS ${{ matrix.name }}
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: "Lint JS", check: "analyze:js", icon: "📜" }
+          - { name: "Lint CSS", check: "analyze:css", icon: "🎨" }
+          - { name: "Spelling", check: "chk:sp", icon: "🔤" }
+          - { name: "Markdown", check: "chk:md", icon: "📝" }
+          - { name: "Format Check", check: "fmt", icon: "✨" }
+          - {
+              name: "A11y",
+              check: "audit:a11y",
+              icon: "♿",
+              needs_server: true,
+            }
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: actions/download-artifact@v4
+        with: { name: all-dependencies }
+      - name: Run Audit
+        run: |
+          if [ "${{ matrix.needs_server }}" == "true" ]; then
+            php -S 127.0.0.1:8000 -t public &
+            sleep 3
+          fi
+          npm run ${{ matrix.check }}
+
+  # =============================================================================
+  # FINAL BUILD
+  # =============================================================================
+  build-check:
+    name: 🏗️ Production Build
+    needs: [php-quality, testing, frontend-qa]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: actions/download-artifact@v4
+        with: { name: all-dependencies }
+      - name: Build Assets
+        run: npm run make
