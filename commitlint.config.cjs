@@ -14,15 +14,17 @@ module.exports = {
             2,
             "always",
             [
-                "feat",
-                "fix",
-                "docs",
-                "style",
-                "refactor",
-                "perf",
-                "test",
-                "chore",
-                "revert",
+                "feat", // Neue Features
+                "fix", // Bugfixes
+                "docs", // Dokumentation
+                "style", // Formatierung (kein Code-Effekt)
+                "refactor", // Refactoring
+                "perf", // Performance-Verbesserungen
+                "test", // Tests hinzufügen/korrigieren
+                "build", // <--- JETZT ERLAUBT: Build-System, Dependencies (npm, sass, etc.)
+                "ci", // <--- AUCH GUT: GitHub Actions, Scripte
+                "chore", // Sonstiges (Wartung)
+                "revert", // Rollbacks
             ],
         ],
         "subject-case": [2, "always", "lower-case"],
